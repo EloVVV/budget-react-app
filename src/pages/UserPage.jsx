@@ -28,7 +28,7 @@ const UserPage = () => {
             <h2>{user.username}</h2>
             <br></br>
             <p>Город:</p>
-            <h2>{user.address.city}</h2>
+            <h2>{user?.address?.city}</h2>
         </div>
     );
 }
