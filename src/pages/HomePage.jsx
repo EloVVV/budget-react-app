@@ -1,38 +1,46 @@
-import { formatMoney } from "../utils";
+import { formatMoney, calcBalance, getItemType } from "../utils";
 import { OPERATION_TYPES } from "../types/operations";
-import { useState } from "react";
-
-const INCOME_CATEGORIES = {
-    salary: "Зарплата",
-    transfer: "Перевод",
-    cashback: "Кэшбек"
-};
-
-const EXPENSE_CATEGORIES = {
-    products: "Продукты",
-    car: "Автомобиль",
-    services: "Коммунальные услуги"
-};
-
-const CATEGORIES = {...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES};
+import { useEffect, useState } from "react";
+import { filterExpense, filterIncome } from "../utils/filter";
+import {CATEGORIES} from "../data/categories";
 
 const initialItems = [
-
+    {
+        id: 1,
+        category: "products",
+        value: 3000,
+        type: OPERATION_TYPES.EXPENSE,
+        date: new Date()
+    },
+    {
+        id: 2,
+        category: "salary",
+        value: 50315,
+        type: OPERATION_TYPES.INCOME,
+        date: new Date()
+    }
 ];
 
+const initialBalanceState = 0;
 
 const HomePage = () => {
 
+    const [balance, setBalance] = useState(initialBalanceState);
+
     const [items, setItems] = useState(initialItems);
 
-    const [balance, setBalance] = useState(0);
+    const [formBalance, setFormBalance] = useState(0);
 
     const [category, setCategory] = useState('none');
 
+    useEffect(() => {
+        setBalance(calcBalance(items));
+    }, [items]);
+    
     const onChangeCategoryHandle = (e) => setCategory(e.target.value);
 
     const onChangeBalanceHandle = (event) => {
-        setBalance((prevState) => {
+        setFormBalance((prevState) => {
             const value = parseInt(event.target.value) || 0;
         
             if (!isNaN(value)) {
@@ -50,31 +58,38 @@ const HomePage = () => {
             prevState.push({
                 id: Date.now(),
                 category: category,
-                value: balance,
+                value: formBalance,
                 type: getItemType(category),
                 date: new Date()
             });
 
             return prevState
         });
-        setBalance(0);
+        setFormBalance(0);
     }
 
-    // Функция определения типа операции
-    const getItemType = (category) => {
-        if (Object.keys(INCOME_CATEGORIES).includes(category)) {
-            return OPERATION_TYPES.INCOME;
-        }
+   
 
-        return OPERATION_TYPES.EXPENSE;
+    const onClickAllFilterHandle = () => {
+        setItems(initialItems);
     }
+
+    const onClickIncomeFilterHandle = () => {
+        setItems(filterIncome(initialItems));
+    }
+
+    const onClickExpenseFilterHandle = () => {
+        setItems(filterExpense(initialItems));
+    }
+
+
     
     return (
         <section>
             <div className="container">
                 <div className="balance">
                     <h2>
-                        {formatMoney(30000)}
+                        {formatMoney(balance)}
                     </h2>
                 </div>
                 <form onSubmit={e => e.preventDefault(e)} className="add_operations">
@@ -89,7 +104,7 @@ const HomePage = () => {
                         type="text" 
                         className="operation" 
                         placeholder="30 000"
-                        value={balance}
+                        value={formBalance}
                         onChange={(e) => onChangeBalanceHandle(e)}
                         />
                         <select onChange={(e) => onChangeCategoryHandle(e)} name="category" id="">
@@ -114,9 +129,9 @@ const HomePage = () => {
                         Операции
                     </h2>
                     <div className="operations-filter">
-                        <button className="button sm">Все операции</button>
-                        <button className="button sm green">Все доходы</button>
-                        <button className="button sm red">Все расходы</button>
+                        <button onClick={onClickAllFilterHandle} className="button sm">Все операции</button>
+                        <button onClick={onClickIncomeFilterHandle} className="button sm green">Все доходы</button>
+                        <button onClick={onClickExpenseFilterHandle} className="button sm red">Все расходы</button>
                     </div>
                     <div className="operations-box">
                         {

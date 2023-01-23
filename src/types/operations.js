@@ -3,5 +3,5 @@
 
 export const OPERATION_TYPES = {
     INCOME: "income",
-    EXPENSE: "expence"
+    EXPENSE: "expense"
 };
