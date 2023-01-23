@@ -1,40 +1,73 @@
-// INCOME - доходы
-//  EXPENSE - расходы
+import { formatMoney } from "../utils";
+import { OPERATION_TYPES } from "../types/operations";
+import { useState } from "react";
 
-const OPERATION_TYPES = {
-    INCOME: "income",
-    EXPENSE: "expence"
+const INCOME_CATEGORIES = {
+    salary: "Зарплата",
+    transfer: "Перевод",
+    cashback: "Кэшбек"
 };
 
-const OPERATIONS = [
-    {
-        id: 1,
-        category: "products",
-        value: 3000,
-        type: "expense",
-        date: new Date()
-    },
-    {
-        id: 2,
-        category: "salary",
-        value: 50315,
-        type: "income",
-        date: new Date()
-    }
+const EXPENSE_CATEGORIES = {
+    products: "Продукты",
+    car: "Автомобиль",
+    services: "Коммунальные услуги"
+};
+
+const CATEGORIES = {...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES};
+
+const initialItems = [
+
 ];
 
-// Форматирование чисел
-const formatNumber = (value) => {
-    return Intl.NumberFormat('ru-Ru').format(parseInt(value));
-}
-
-// Функция форм. для денег
-
-const formatMoney = (value) => {
-    return `${formatNumber(value)} руб.`;
-}
 
 const HomePage = () => {
+
+    const [items, setItems] = useState(initialItems);
+
+    const [balance, setBalance] = useState(0);
+
+    const [category, setCategory] = useState('none');
+
+    const onChangeCategoryHandle = (e) => setCategory(e.target.value);
+
+    const onChangeBalanceHandle = (event) => {
+        setBalance((prevState) => {
+            const value = parseInt(event.target.value) || 0;
+        
+            if (!isNaN(value)) {
+                prevState = value;
+            }
+
+            return prevState;
+        });
+    }
+
+    const onAddItemHandle = () => {
+        setItems((prevState) => {
+            prevState = [...prevState];
+        
+            prevState.push({
+                id: Date.now(),
+                category: category,
+                value: balance,
+                type: getItemType(category),
+                date: new Date()
+            });
+
+            return prevState
+        });
+        setBalance(0);
+    }
+
+    // Функция определения типа операции
+    const getItemType = (category) => {
+        if (Object.keys(INCOME_CATEGORIES).includes(category)) {
+            return OPERATION_TYPES.INCOME;
+        }
+
+        return OPERATION_TYPES.EXPENSE;
+    }
     
     return (
         <section>
@@ -44,7 +77,7 @@ const HomePage = () => {
                         {formatMoney(30000)}
                     </h2>
                 </div>
-                <div className="add_operations">
+                <form onSubmit={e => e.preventDefault(e)} className="add_operations">
                     <div className="title">
                         Добавить операцию
                     </div>
@@ -55,13 +88,26 @@ const HomePage = () => {
                         <input 
                         type="text" 
                         className="operation" 
-                        placeholder="30 000"/>
-                        <select name="category" id="">
-                            <option value="products">Продукты</option>
+                        placeholder="30 000"
+                        value={balance}
+                        onChange={(e) => onChangeBalanceHandle(e)}
+                        />
+                        <select onChange={(e) => onChangeCategoryHandle(e)} name="category" id="">
+                            <option value="none">Не выбрано</option>
+
+                            {
+                                Object.keys(CATEGORIES).map((category) => {
+                                    return (
+                                        <option key={category} value={category}>
+                                            {CATEGORIES[category]}
+                                        </option>
+                                    );
+                                })
+                            }
                         </select>
-                        <button className="button add_operation">Добавить операцию</button>
+                        <button onClick={onAddItemHandle} className="button add_operation">Добавить операцию</button>
                     </div>
-                </div>
+                </form>
                 <div className="operations">
                     
                     <h2 className="operation_title">
@@ -74,13 +120,13 @@ const HomePage = () => {
                     </div>
                     <div className="operations-box">
                         {
-                            OPERATIONS.map((operation) => {
+                            items.map((item) => {
                                 return (
-                                    <div key={operation.id} className="operation">
+                                    <div key={item.id} className="operation">
                                         <div className="operation_info">
-                                            <div className={`circle ${operation.type === OPERATION_TYPES.INCOME ? "income" : "expense"}`}>
+                                            <div className={`circle ${item.type === OPERATION_TYPES.INCOME ? "income" : "expense"}`}>
                                                 {
-                                                    operation.type === OPERATION_TYPES.INCOME ?
+                                                    item.type === OPERATION_TYPES.INCOME ?
                                                     <i className="fa-solid fa-money-bill"></i>
                                                     :
                                                     <i className="fa-solid fa-shop"></i>
@@ -89,8 +135,8 @@ const HomePage = () => {
                                                 
                                             </div>
                                             
-                                            <p className="category">Категория: {operation.category}</p>
-                                            <p className="total">{formatMoney(operation.value)}</p>
+                                            <p className="category">Категория: {CATEGORIES[item.category]}</p>
+                                            <p className="total">{formatMoney(item.value)}</p>
                                         </div>
                                         <div className="operation_actions">
                                             <button className="button delete_button">Удалить</button>
